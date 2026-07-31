@@ -17,13 +17,13 @@ docker-compose up --build
 
 
 ### Локальный запуск
-Запустить контейнер с БД:
-```bash
-docker-compose up -d db
-```
 Склонировать переменные окружения:
 ```bash
 cp .env.example .env
+```
+Запустить контейнер с БД:
+```bash
+docker-compose up -d db
 ```
 Установить зависимости:
 ```bash
@@ -35,7 +35,7 @@ poetry run alembic upgrade head
 ```
 Наполнить БД тестовыми данными:
 ```bash
-python -m app.scripts.seed
+poetry run python -m app.scripts.seed
 ```
 Запустить сервис:
 ```bash
