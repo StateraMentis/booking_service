@@ -1,5 +1,7 @@
 version: '3.8'
 
+name: booking_service
+
 services:
   db:
     image: postgres:16.3-alpine3.20
