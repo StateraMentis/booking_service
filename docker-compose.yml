@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16.3-alpine3.20
+    container_name: meeting_room_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-meeting_room_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./db_data:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-meeting_room_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - meeting_network
+    restart: unless-stopped
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - meeting_network
+    depends_on:
+      - db
+    volumes:
+      - ./app/models/migrations:/app/alembic
+    restart: unless-stopped
+
+networks:
+  meeting_network:
+    driver: bridge
+    name: meeting_network
+
+volumes:
+  postgres_data:
+    name: meeting_room_postgres_data
+    driver: bridge

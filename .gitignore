@@ -1,0 +1,13 @@
+# Environment configuration
+**/.env
+
+# VS Code Configuration
+**/.vscode/
+
+# Python
+**/__pycache__/
+
+# Pytest
+**/.pytest_cache/
+.coverage
+**/htmlcov/
