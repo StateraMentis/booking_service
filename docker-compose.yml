@@ -5,17 +5,17 @@ name: booking_service
 services:
   db:
     image: postgres:16.3-alpine3.20
-    container_name: meeting_room_postgres
+    container_name: booking_service_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-meeting_room_db}
+      POSTGRES_DB: ${POSTGRES_DB:-booking_service_db}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - ./db_data:/docker-entrypoint-initdb.d/init-db.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-meeting_room_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-booking_service_db}"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -1,142 +1,100 @@
-# Meeting Room Booking Service
+# Сервис бронирования переговорных комнат
 
-Небольшой сервис для бронирования переговорных комнат на FastAPI.
+Веб-сервис для автоматизации бронирования переговорных комнат в коворкинге. Тестовое задание для поступления на курс `Python` от команды **ШИФТ**.
 
-## Краткое описание
+## Быстрый старт
 
-Сервис предоставляет API для управления пользователями, комнатами, временными слотами и бронированиями.
+### Docker
+```bash
+cp .env.example .env
+docker-compose up -d db
+docker-compose up app --build
+```
+При первом запуске автоматически применяются миграции и загружаются тестовые данные.
 
-## Требования
-
-- Python 3.10+
-- Poetry (рекомендуется) или pip
-- Docker & Docker Compose (опционально)
-
-## Переменные окружения
-
-Обязательные переменные:
-
-- `SECRET_KEY` — секрет для подписи JWT
-
-Опционально (если не указан `DATABASE_URL`, собирается из компонентов):
-
-- `DATABASE_URL` или `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
-- `ENVIRONMENT` — `development`/`test`/`production` (по умолчанию `development`)
-- `DEBUG` — `true`/`false` (по умолчанию `false`)
-
-Можно положить переменные в `.env` в корне проекта.
-
-## Установка (Poetry)
-
-1. Установите зависимости:
-
+### Локальный запуск
 ```bash
 poetry install
+poetry run alembic upgrade head
+python -m app.scripts.seed
+poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-2. Установите переменные окружения (пример для PowerShell):
-
-```powershell
-$env:SECRET_KEY = "change-me-to-a-strong-secret"
-$env:DATABASE_URL = "sqlite:///./data.db"  # или URL к Postgres
-$env:ENVIRONMENT = "development"
-$env:DEBUG = "1"
-```
-
-3. Запустите приложение:
-
+### Тесты
 ```bash
-poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+poetry run pytest
 ```
 
-После старта документация доступна по `http://localhost:8000/api/docs` (если `DEBUG=true`).
+## API
+Документация доступна после запуска:
 
-## Быстрый запуск через Docker Compose
+- Swagger: http://localhost:8000/api/docs
 
-```bash
-docker-compose up --build
-```
+-ReDoc: http://localhost:8000/api/redoc
 
-## Миграции / инициализация БД
 
-Проект содержит `alembic.ini`. Примените миграции:
+### Аутентификация
+POST /api/v1/auth/register - Регистрация нового сотрудника
+POST /api/v1/auth/login - Получение JWT токена
 
-```bash
-alembic upgrade head
-```
-
-Для быстрой проверки в локальной среде можно использовать SQLite (см. `DATABASE_URL`).
-
-## Тесты
-
-```bash
-pytest --cov=app
-```
-
-## Примеры использования API
-
-Все эндпоинты имеют префикс `/api/v1`.
-
-1) Регистрация пользователя
-
-```bash
-curl -s -X POST http://localhost:8000/api/v1/auth/register \
-	-H 'Content-Type: application/json' \
-	-d '{"username":"jdoe","email":"jdoe@example.com","password":"Password1","full_name":"John Doe"}'
-```
-
-Успешный ответ: HTTP 201 с объектом пользователя (без пароля).
-
-2) Логин и получение токена
-
-```bash
-curl -s -X POST http://localhost:8000/api/v1/auth/login \
-	-H 'Content-Type: application/json' \
-	-d '{"username":"jdoe","password":"Password1"}'
-```
-
-Пример ответа:
-
-```json
+Пример запроса на логин:
 {
-	"access_token": "eyJ...",
-	"token_type": "bearer",
-	"expires_in": 1800,
-	"user_id": 1,
-	"role": "employee"
+"username": "employee@example.com",
+"password": "password123"
 }
-```
 
-3) Получить список комнат
+Ответ:
+{
+"access_token": "eyJhbGciOiJIUzI1NiIs...",
+"token_type": "bearer",
+"expires_in": 1800,
+"user_id": 1,
+"role": "employee"
+}
 
-```bash
-curl -s http://localhost:8000/api/v1/rooms \
-	-H "Authorization: Bearer <ACCESS_TOKEN>"
-```
+> Примечание: Токен передается в заголовке: Authorization: Bearer <token>
 
-4) Проверить доступность комнаты на дату
+### Пользователи
+`GET /api/v1/users/me` - Информация о себе (все)
+`PUT /api/v1/users/me` - Обновить свои данные (все)
+`GET /api/v1/users/` - Список пользователей (админ)
+`POST /api/v1/users/` - Создать пользователя (админ)
+`GET /api/v1/users/{user_id}` - Получить пользователя (админ)
+`PUT /api/v1/users/{user_id}` - Обновить пользователя (админ)
+`DELETE /api/v1/users/{user_id}` - Удалить пользователя (админ)
 
-```bash
-curl -s "http://localhost:8000/api/v1/rooms/1/availability?date_str=2026-08-01" \
-	-H "Authorization: Bearer <ACCESS_TOKEN>"
-```
+### Комнаты
+`GET /api/v1/rooms/` - Список комнат (все)
+`GET /api/v1/rooms/{room_id}` - Информация о комнате (все)
+`GET /api/v1/rooms/{room_id}/availability` - Доступные слоты на дату (все)
+`POST /api/v1/rooms/` - Создать комнату (админ)
+`PUT /api/v1/rooms/{room_id}` - Обновить комнату (админ)
+`DELETE /api/v1/rooms/{room_id}` - Удалить комнату (админ)
 
-5) Создать бронирование
+> Примечание: Параметры availability: ?date=YYYY-MM-DD
 
-```bash
-curl -s -X POST http://localhost:8000/api/v1/bookings \
-	-H 'Content-Type: application/json' \
-	-H "Authorization: Bearer <ACCESS_TOKEN>" \
-	-d '{"room_id":1,"time_slot_id":2,"date":"2026-08-01","description":"Team sync"}'
-```
+### Временные слоты
+`GET /api/v1/time-slots/rooms/{room_id}` - Список слотов комнаты (все)
+`POST /api/v1/time-slots/` - Создать слот (админ)
+`PUT /api/v1/time-slots/{slot_id}` - Обновить слот (админ)
+`DELETE /api/v1/time-slots/{slot_id}` - Удалить слот (админ)
 
-Пример успешного ответа: HTTP 201 с объектом бронирования.
+### Бронирования
+`GET /api/v1/bookings/my` - Мои бронирования (все)
+`GET /api/v1/bookings/my/history` - История бронирований (все)
+`POST /api/v1/bookings/` - Создать бронирование (все)
+`GET /api/v1/bookings/{booking_id}` - Получить бронирование (все)
+`PUT /api/v1/bookings/{booking_id}` - Обновить бронирование (только автор)
+`DELETE /api/v1/bookings/{booking_id}` - Отменить бронирование (автор или админ)
+`GET /api/v1/bookings/admin/all` - Все бронирования (админ)
 
-> Примечание: некоторые операции требуют роли `admin` (создание комнат, слотов, просмотр всех бронирований).
+### Права доступа
+> Сотрудник: просмотр комнат и слотов, создание/отмена своих бронирований
+> Администратор: все права сотрудника + управление комнатами/слотами/пользователями, отмена любых бронирований
 
-## Полезные ссылки
-
-- Документация (Swagger): `http://localhost:8000/api/docs`
-- Тесты: запустите `pytest` для проверки покрытия
-
+### Тестовые пользователи
+*Сотрудник:* alice / Alice123
+*Сотрудник:* bob / Bob123
+*Сотрудник:* charlie / Charlie123
+*Администратор:* admin / Admin123
 
