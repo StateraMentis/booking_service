@@ -44,9 +44,9 @@ def seed_database(db: Session) -> None:
 
     print("  [ ] Создаем обычных пользователей...")
     users_data = [
-        ("alice", "alice@example.com", "Alice123", "Алиса Иванова"),
-        ("bob", "bob@example.com", "Bob123", "Боб Петров"),
-        ("charlie", "charlie@example.com", "Charlie123", "Чарли Сидоров"),
+        ("monro", "monro@example.com", "SuperPass15", "Зинаида Монро"),
+        ("san", "san@example.com", "SanSan1", "Сан Саныч"),
+        ("billi", "bill@example.com", "IamBill", "Билли Морган"),
     ]
 
     users = []
