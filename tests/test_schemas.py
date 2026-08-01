@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import pytest
 from app.api.schemas.booking import BookingCreate, BookingUpdate
 from app.api.schemas.user import UserCreate
-from app.exceptions import BookingDateInPastError
+from app.exceptions import BookingDateInPastError, ValidationError
 
 
 def test_booking_create_rejects_past_date():
@@ -21,7 +21,7 @@ def test_booking_update_rejects_past_date():
 
 
 def test_user_create_password_complexity_validation():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValidationError):
         UserCreate(
             username="john_doe",
             email="john@example.com",

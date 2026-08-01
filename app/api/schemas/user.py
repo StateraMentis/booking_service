@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
 from app.enums import UserRole
 from app.api.schemas.common import BaseResponse
+from app.exceptions import ValidationError
 
 
 class UserCreate(BaseModel):
@@ -20,7 +21,7 @@ class UserCreate(BaseModel):
     @classmethod
     def validate_username(cls, v: str) -> str:
         if not v.isalnum() and "_" not in v:
-            raise ValueError(
+            raise ValidationError(
                 "Имя пользователя может содержать только буквы, цифры и символ подчеркивания"
             )
         return v.lower()
@@ -34,22 +35,24 @@ class UserCreate(BaseModel):
 
         byte_length = len(v.encode("utf-8"))
         if byte_length > 72:
-            raise ValueError(
+            raise ValidationError(
                 f"Пароль слишком длинный ({byte_length} байт). "
                 "Максимальная длина 72 байта"
             )
 
         if len(v) < 8:
-            raise ValueError("Пароль должен содержать минимум 8 символов")
+            raise ValidationError("Пароль должен содержать минимум 8 символов")
 
         if not any(c.isupper() for c in v):
-            raise ValueError("Пароль должен содержать хотя бы одну заглавную букву")
+            raise ValidationError(
+                "Пароль должен содержать хотя бы одну заглавную букву"
+            )
 
         if not any(c.islower() for c in v):
-            raise ValueError("Пароль должен содержать хотя бы одну строчную букву")
+            raise ValidationError("Пароль должен содержать хотя бы одну строчную букву")
 
         if not any(c.isdigit() for c in v):
-            raise ValueError("Пароль должен содержать хотя бы одну цифру")
+            raise ValidationError("Пароль должен содержать хотя бы одну цифру")
 
         return v
 

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
+from app.exceptions import ValidationError
 
 
 class LoginRequest(BaseModel):
@@ -16,7 +17,7 @@ class LoginRequest(BaseModel):
     def validate_username(cls, v: str) -> str:
         """Проверяет, что username содержит только допустимые символы."""
         if not v.isalnum() and "_" not in v:
-            raise ValueError(
+            raise ValidationError(
                 "Имя пользователя может содержать только буквы, цифры и символ подчеркивания"
             )
         return v.lower()
